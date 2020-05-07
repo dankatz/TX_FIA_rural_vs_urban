@@ -91,7 +91,7 @@ ba_by_sp <- ba_by_sp %>%
 ba_by_sp <- left_join(ba_by_sp, species_codes_table)
 ba_by_sp
 
-write_csv(ba_by_sp, "C:/Users/dsk856/Box/texas/statewide_abundance/tree_abundance_near_austin200506.csv")
+#write_csv(ba_by_sp, "C:/Users/dsk856/Box/texas/statewide_abundance/tree_abundance_near_austin200506.csv")
 
 summarize(tp_sf_austin2)
 
@@ -105,14 +105,19 @@ ufia_ba_by_sp <- urban_fia %>%
   mutate(basal_area = 0.005454154 * DIA^2) 
 ufia_total_ba_across_plots <- ufia_ba_by_sp %>% ungroup() %>% summarise(ba_grand_total = sum(basal_area, na.rm = TRUE))  
 ufia_ba_by_sp <- ufia_ba_by_sp %>%
-  group_by(GENUS, SPECIES, COMMON_NAME) %>%
-  summarize(basal_area_sp = sum(basal_area, na.rm = TRUE),
-            n = n(),
-            rel_ba = basal_area_sp/ufia_total_ba_across_plots$ba_grand_total) %>%
-  arrange(-rel_ba)
+  group_by(GENUS, SPECIES) %>%
+  summarize(basal_area_sp_u = sum(basal_area, na.rm = TRUE),
+            n_u = n(),
+            rel_ba_u = basal_area_sp_u/ufia_total_ba_across_plots$ba_grand_total) %>%
+  arrange(-rel_ba_u)
 ufia_ba_by_sp
-write_csv(ufia_ba_by_sp, "C:/Users/dsk856/Box/texas/statewide_abundance/tree_abundance_in_austin200506.csv")
+#write_csv(ufia_ba_by_sp, "C:/Users/dsk856/Box/texas/statewide_abundance/tree_abundance_in_austin200506.csv")
 
+
+dif_ba_to_save <- full_join(ba_by_sp, ufia_ba_by_sp) %>%
+  mutate(dif_rel_ba = (rel_ba - rel_ba_u),
+         dif_rel_ba_stan = (rel_ba - rel_ba_u)/ (rel_ba + rel_ba_u))
+write_csv(dif_ba_to_save, "C:/Users/dsk856/Box/texas/statewide_abundance/tree_abundance_in_austin_vs_rural200506.csv")
 
 # data source 3: NAB stations
 #load pollen collection sites
