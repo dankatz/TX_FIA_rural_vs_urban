@@ -9,6 +9,7 @@ library(ggmap)
 library(sf)
 library(ggthemes)
 library(readr)
+library(lubridate)
 rm(list = ls())
 
 
@@ -122,3 +123,41 @@ write_csv(dif_ba_to_save, "C:/Users/dsk856/Box/texas/statewide_abundance/tree_ab
 # data source 3: NAB stations
 #load pollen collection sites
 tx_nab_coords <- read.csv("C:/Users/dsk856/Box/texas/NAB/TX_NAB_station_coords.csv")
+p <- read_csv("C:/Users/dsk856/Box/texas/NAB/NAB2009_2019_pollen_200508.csv", guess_max = 50000) 
+p$month <- month(p$date)
+
+mean_na <- function(x){mean(x, na.rm = TRUE)}
+n_above_zero <- function(x){
+  x2 <- x[x > 0]
+  x3 <- x2[!is.na(x2)]
+  x_length_no_0_no_NA <- length(x3)
+  x_length_prop <- x_length_no_0_no_NA/length(x)
+  return(x_length_prop)
+  }
+
+#proportion of observations where pollen from a taxon was measured, by year, in May
+prop_obsvd <- 
+  p %>% mutate(date = ymd(date),
+                  mo = month(date),
+               year = year(date)) %>%
+    filter(mo == 5) %>%
+    filter(site2 == "Austin" | site2 == "Waco" | site2 == "Waco 2" | site2 == "College Station" | 
+             site2 == "San Antonio 2" | site2 == "San Antonio 3") %>%
+    group_by(year, site2) %>%
+    select(-X1, -Date, -file, - site, -date, - mo) %>%
+    summarize_all(funs(n_above_zero))
+write_csv(prop_obsvd, "C:/Users/dsk856/Box/texas/statewide_abundance/NAB_central_TX_taxa_obsvd_may_prop_200508.csv")
+
+#mean pollen concentration for each taxon, by year, in May
+mean_obsvd <- 
+  p %>% mutate(date = ymd(date),
+               mo = month(date),
+               year = year(date)) %>%
+  filter(mo == 5) %>%
+  filter(site2 == "Austin" | site2 == "Waco" | site2 == "Waco 2" | site2 == "College Station" | 
+           site2 == "San Antonio 2" | site2 == "San Antonio 3") %>%
+  group_by(year) %>%
+  select(-X1, -Date, -file, - site, -date, - mo) %>%
+  summarize_all(funs(mean_na))
+write_csv(mean_obsvd, "C:/Users/dsk856/Box/texas/statewide_abundance/NAB_central_TX_taxa_obsvd_may_mean_200508.csv")
+
